@@ -67,6 +67,7 @@ The contract is organized into several modules:
 The Market contract implements the PSP22 interface for ERC-20 compatibility. This includes functions for transferring tokens, checking balances, allowances, and approval mechanisms.
 
 ### PSP22Metadata Interface Implementation
+Path: contracts/src/vault
 
 The Market contract also implements the PSP22Metadata interface, providing functions to query metadata such as token name, symbol, and decimals.
 
@@ -78,7 +79,7 @@ The Market contract is designed for deployment and usage on the network, facilit
 
 ## Overview
 
-The Vault contract is an ink! smart contract designed to manage collateral assets for leveraged trading positions in the Acala network. It allows users to deposit and withdraw collateral, supporting multiple collateral assets and markets.
+The Vault contract is an ink! smart contract designed to manage collateral assets for leveraged trading positions. It allows users to deposit and withdraw collateral, supporting multiple collateral assets and markets.
 
 ## Features and Functions
 
@@ -138,7 +139,7 @@ The contract is organized into modules:
 
 ## Usage
 
-The Vault contract is designed to be deployed and used on the Acala network for managing collateral assets in decentralized trading. Users can interact with the contract to deposit and withdraw collateral for their leveraged positions. The contract supports multiple collateral assets and markets.
+The Vault contract is designed to be deployed and used for managing collateral assets in decentralized trading. Users can interact with the contract to deposit and withdraw collateral for their leveraged positions. The contract supports multiple collateral assets and markets.
 
 ## End-to-End Tests
 
