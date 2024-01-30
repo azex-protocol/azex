@@ -50,7 +50,7 @@ mod market {
     }
 
     impl Market {
-        #[ink(constructor)]
+        #[ink(constructor, payable)]
         pub fn default() -> Self {
             Self {
                 data: PSP22Data::new(0, Self::env().caller()),
@@ -71,7 +71,7 @@ mod market {
             }
         }
 
-        #[ink(constructor)]
+        #[ink(constructor, payable)]
         pub fn new(
             name: Option<String>,
             symbol: Option<String>,

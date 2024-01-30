@@ -22,8 +22,10 @@ export type InitParams = {
   prefix: number
   toBNWithDecimals: (_: number | string) => BN
 }
+const PHRASE = 'wise ritual dust outside royal blush recall dose parent purchase satoshi weapon'
 export const initPolkadotJs = async (): Promise<InitParams> => {
-  const accountUti = process.env.ACCOUNT_URI || '//Alice'
+
+  const accountUti = process.env.ACCOUNT_URI || 'lTvAphx0Im+BOycJhkf3OwngGOaMH1kh+sexCBOrA9sAgAAAAQAAAAgAAAApC23aWA34jhVKnNIofIZef4kkHUShTlzuIMshj67xS6nPMP3ZrpPyJLfL4cqG62ca6QTAWidTx/OlDV5zY2KT2cEDx57qGtDYfhjoxKqOWflxU+0tfmR2O273jif1l90mP4kPY/zNeEhZXoPWNggX/HOS3Q6WEpglCbGepoFj+scTEDKl4u0pWwZDLLnDsbaD2/rESH9/Iw/mMxeL'
   const chain = getSubstrateChain(chainId)
   if (!chain) throw new Error(`Chain '${chainId}' not found`)
 
@@ -42,7 +44,11 @@ export const initPolkadotJs = async (): Promise<InitParams> => {
 
   // Initialize account & set signer
   const keyring = new Keyring({ type: 'sr25519' })
-  const account = keyring.addFromUri(accountUti)
+    const newPair = keyring.addFromMnemonic(PHRASE);
+
+// (Advanced) add an account with a derivation path (hard & soft)
+const newDeri = keyring.addFromUri(`${PHRASE}//hard-derived/soft-derived`);
+  const account =newPair
   const balance = await getBalance(api, account.address)
   console.log(`Initialized Account: ${account.address} (${balance.balanceFormatted})\n`)
 

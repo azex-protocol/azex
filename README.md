@@ -1,327 +1,165 @@
-![inkathon Devtooling Banner](inkathon-devtooling-banner.png)
+# 1. Market Contract Documentation
+Path: contracts/src/market
 
-# ink!athon Boilerplate
+## Overview
+The Market contract is an ink! smart contract designed for decentralized trading on the Aleph zero network. It enables users to open, close, and manage leveraged positions in a market using a specified collateral asset. The contract integrates with the AZEX for obtaining price data and supports the use of a wrapped native asset (WAZERO) as collateral.
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Built with ink!](https://raw.githubusercontent.com/paritytech/ink/master/.images/badge.svg)](https://use.ink)
-![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-000000?logo=typescript&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)
+## Key Features and Functions
 
-This is a full-stack dApp boilerplate for ink! smart contracts with an integrated frontend. It can be used to quickly start developing your hackathon idea or to scaffold a production-ready Web3 application.
+### Contract Structure
 
-The project is part of a [Scio Labs](https://scio.xyz) initiative to improve the developer experience in the ink! ecosystem and a proud member of the [Aleph Zero EFP](https://alephzero.org/ecosystem-funding-program). 💜
+The contract is organized into several modules:
 
-Other projects include:
+- **errors**: Defines custom error types used within the contract.
+- **position**: Defines the Position struct representing an open position in the market.
+- **market**: The main module defining the Market smart contract.
 
-- `create-ink-app` CLI (_Coming soon_)
-- [`ink!athon`](https://github.com/scio-labs/inkathon) Boilerplate
-- [`useInkathon`](https://github.com/scio-labs/use-inkathon) Hooks & Utility Library
-- [`zink!`](https://github.com/scio-labs/zink) Smart Contract Macros
+### Storage
 
-**Join the discussion in our [Telegram Group](https://t.me/inkathon)** 💬
+- **data**: Storage for PSP22 token data (total supply, balances, allowances, etc.).
+- **name**, **symbol**, **decimals**: Market metadata for PSP22 token.
+- **owner**: AccountId of the contract owner.
+- **positions**: Mapping of user and position ID to Position details.
+- **ids_per_user**: Mapping of user to a vector of position IDs.
+- **new_id**: Mapping of user to the latest position ID.
+- **underlying_asset**, **oracle**, **vault**, **wazero**: AccountIds of associated contracts.
+- **liquidation_threshold**, **liquidation_penalty**, **protocol_fee**: Parameters for liquidation and fee calculations.
 
-**If you want to contribute, please read our [Contributor Guidelines](https://github.com/scio-labs/inkathon/blob/main/CONTRIBUTING.md)** 🙏
+### Constructors
 
----
+1. **default**: Creates a new instance of the Market contract with default values.
+2. **new**: Initializes the Market contract with user-provided parameters.
 
-**Table of Contents:**
+### View Functions
 
-1. [About 📖](#about-)
-2. [Getting started 🚀](#getting-started-)
-   1. [1. Run the frontend](#1-run-the-frontend)
-   2. [2. Build \& deploy contracts on a local node](#2-build--deploy-contracts-on-a-local-node)
-   3. [3. Connect the frontend to the local node](#3-connect-the-frontend-to-the-local-node)
-3. [Customization 🎨](#customization-)
-   1. [1. Project Name](#1-project-name)
-   2. [2. Custom Contracts](#2-custom-contracts)
-   3. [3. Custom Scripts](#3-custom-scripts)
-4. [The Stack 🥞](#the-stack-)
-5. [Live Examples 🌐](#live-examples-)
-6. [Deployment 🚢](#deployment-)
-   1. [Environment Variables](#environment-variables)
-   2. [Contract Deployment](#contract-deployment)
-7. [VSCode Setup 🛠](#vscode-setup-)
-   1. [Workspace](#workspace)
-   2. [Plugins](#plugins)
-8. [FAQs \& Troubleshooting 💬](#faqs--troubleshooting-)
+1. **view_market_data**: Retrieves market metadata (name, symbol, decimals).
+2. **view_underlying_asset**: Retrieves the AccountId of the underlying asset.
+3. **view_position**: Retrieves details of a specific position.
+4. **view_positions**: Retrieves all positions for a given user.
 
----
+### Internal Functions
 
-## About 📖
+1. **get_price**: Retrieves the price of a specified symbol from the DIA price oracle.
+2. **get_symbol_and_decimals**: Retrieves symbol and decimals information for a given token.
+3. **calculate_usd_from_asset_amount**: Converts asset amount to USD based on price and decimals.
+4. **calculate_pnl_percent**: Calculates the percentage profit/loss for a position.
+5. **calculate_asset_amount_from_usd**: Converts USD amount to asset amount based on price and decimals.
+6. **wrap_native**: Wraps native asset (WAZERO) into the ERC-20 format.
+7. **calculate_amount_and_mint**: Calculates and mints PSP22 tokens based on the deposited amount.
+8. **burn_and_calculate_amount**: Burns PSP22 tokens and calculates the corresponding asset amount.
+9. **open_position**: Opens a new leveraged position in the market.
+10. ... (other internal functions for deposit, withdrawal, liquidation, etc.)
 
-The boilerplate comes with a small sample ink! `Greeter` contract which stores a `message` (the "greeting") and allows anyone to update it. The frontend contains simple UI components to connect your wallet and interact with the contract (i.e. read & write the `message`). Try it out live on [inkathon.xyz](https://inkathon.xyz).
+### Public Functions
 
-## Getting started 🚀
+1. **deposit_native**: Deposits native asset (WAZERO) into the contract.
+2. **deposit**: Deposits a specified amount of the underlying asset into the contract.
+3. **withdraw_native**: Withdraws native asset (WAZERO) from the contract.
+4. **withdraw**: Withdraws a specified amount of the underlying asset from the contract.
+5. **open_native**: Opens a new leveraged position using native asset (WAZERO) as collateral.
+6. **open**: Opens a new leveraged position using a specified collateral asset.
+7. **close**: Closes an open position and handles profit/loss accordingly.
+8. **is_liquidatable**: Checks if a position is eligible for liquidation.
+9. **liquidate**: Liquidates a position, seizing collateral and applying fees.
 
-### 1. Run the frontend
+### PSP22 Interface Implementation
 
-The frontend works out of the box, without a local node running, as the sample contract is pre-deployed on certain live testnets (i.e. `alephzero-testnet` and `shibuya`). Necessary deployment metadata and addresses are provided under `contracts/deployments/`.
+The Market contract implements the PSP22 interface for ERC-20 compatibility. This includes functions for transferring tokens, checking balances, allowances, and approval mechanisms.
 
-> **Pre-requisites:**
->
-> - Setup Node.js v18+ (recommended via [nvm](https://github.com/nvm-sh/nvm) with `nvm install 18`)
-> - Install [pnpm](https://pnpm.io/installation) (recommended via [Node.js Corepack](https://nodejs.org/api/corepack.html) or `npm i -g pnpm`)
-> - Clone this repository
+### PSP22Metadata Interface Implementation
 
-<details>
-<summary><strong>Special Instructions for Windows Users</strong></summary>
+The Market contract also implements the PSP22Metadata interface, providing functions to query metadata such as token name, symbol, and decimals.
 
-> [!IMPORTANT]  
-> Windows users must either use [WSL](https://learn.microsoft.com/windows/wsl/install) (recommended) or a custom shell like [Git Bash](https://git-scm.com/downloads). PowerShell is not supported.
+## Usage
 
-> **Pre-requisites when using WSL for Linux:**
->
-> - Install [WSL](https://learn.microsoft.com/windows/wsl/install) and execute _all_ commands in the WSL terminal
-> - Setup Node.js v18+ (recommended via [nvm](https://github.com/nvm-sh/nvm) with `nvm install 18`)
-> - Install the following npm packages globally:
-> - `npm i -g npm`
-> - `npm i -g pnpm node-gyp make`
-> - Clone this repository into the WSL file system (e.g. `/home/<user>/inkathon`).
->
-> **Tip:** You can enter `\\wsl$\` in the top bar of the Windows Explorer to access the WSL file system visually.
+The Market contract is designed for deployment and usage on the network, facilitating decentralized trading. Users can interact with the contract to open, close, and manage leveraged positions in a market. It supports both native asset (WAZERO) and other specified collateral assets.
 
-</details>
+# 2. Vault Contract Documentation
 
-```bash
-# Install dependencies (once)
-# NOTE: This automatically creates an `.env.local` file
-pnpm install
+## Overview
 
-# Start Next.js frontend
-pnpm run dev
-```
+The Vault contract is an ink! smart contract designed to manage collateral assets for leveraged trading positions in the Acala network. It allows users to deposit and withdraw collateral, supporting multiple collateral assets and markets.
 
-Optionally, to enable [`simple-git-hooks`](https://github.com/toplenboren/simple-git-hooks) (for automatic linting & formatting when committing), you can run the following command once: `pnpm simple-git-hooks`.
+## Features and Functions
 
-### 2. Build & deploy contracts on a local node
+### Contract Structure
 
-The `contracts/package.json` file contains shorthand scripts for building, testing, and deploying your contracts. To run these scripts, you need to set `contracts/` as the active working directory in your terminal.
+The contract is organized into modules:
 
-> **Pre-requisites:**
->
-> - Install Rust via the [Substrate Docs](https://docs.substrate.io/install/) (skip the "Compile a Substrate node" section)
-> - Install [`cargo contract`](https://github.com/paritytech/cargo-contract)
-> - Install [`substrate-contracts-node`](https://github.com/paritytech/substrate-contracts-node)
+- `errors`: Defines custom error types used within the contract.
+- `traits`: Contains the CollateralVault trait defining the interface.
+- `vault`: The main module defining the Vault smart contract.
 
-```bash
-# Build contracts and move artifacts to `contracts/deployments/{contract}/` folders
-pnpm run build
+### Storage
 
-# Start local node with persistence (contracts stay deployed after restart)
-# NOTE: When using Brave, shields have to be taken down for the UIs
-pnpm run node
+- `admin`: AccountId of the contract administrator.
+- `balances`: Mapping of (market, user, position) to (balance, collateral asset).
+- `markets`: List of market AccountIds.
+- `assets`: List of supported collateral asset AccountIds.
 
-## IMPORTANT: Open a separate terminal window and keep the node running
+### Constructors
 
-# Deploy the contracts on the local node
-pnpm run deploy
-```
+- `new`: Creates a new instance of the Vault contract with default values.
 
-Alternatively, you can also deploy contracts manually using [Contracts UI](https://contracts-ui.substrate.io/) (`pnpm contracts-ui`) in the browser.
+### CollateralVault Trait Functions
 
-### 3. Connect the frontend to the local node
+1. **`user_collateral`**
+   - **Description**: Retrieves the collateral balance and asset for a specific user's position in a market.
+   - **Parameters**: `market` (AccountId), `user` (AccountId), `id` (u128).
+   - **Returns**: Option<(Balance, AccountId)>.
 
-Open the `frontend/.env.local` file and set the `NEXT_PUBLIC_DEFAULT_CHAIN` variable to `development`. Then restart the frontend and you should be able to interact with the contracts deployed on your local node.
+2. **`supported_collateral_assets`**
+   - **Description**: Retrieves the list of supported collateral asset AccountIds.
+   - **Returns**: Vec<AccountId>.
 
-_Read more about environment variables and all available chain constants in the [Environment Variables](#environment-variables) section below._
+3. **`markets_with_access`**
+   - **Description**: Retrieves the list of markets that the contract has access to.
+   - **Returns**: Vec<AccountId>.
 
-## Customization 🎨
+4. **`deposit`**
+   - **Description**: Deposits collateral into a user's position.
+   - **Parameters**: `user` (AccountId), `id` (u128), `collateral_asset` (AccountId), `collateral_amount` (Balance).
+   - **Returns**: Result<(), VaultError>.
 
-### 1. Project Name
+5. **`withdraw`**
+   - **Description**: Withdraws collateral from a user's position.
+   - **Parameters**: `user` (AccountId), `id` (u128), `withdraw_amount` (Balance), `receiver` (AccountId).
+   - **Returns**: Result<(), VaultError>.
 
-There are multiple places where you need to insert your project's name and identifier. Most of these occurrences are highlighted with a `/* TODO */` comment in the code. You can easily replace them one by one by installing the [`todo-tree`](https://marketplace.visualstudio.com/items?itemName=gruntfuggly.todo-tree) plugin.
+6. **`add_asset`**
+   - **Description**: Adds a new collateral asset to the supported list.
+   - **Parameters**: `collateral_asset` (AccountId).
+   - **Returns**: Result<(), VaultError>.
 
-Additionally, there are the following un-highlighted occurrences:
+7. **`add_market`**
+   - **Description**: Adds a new market to the list of accessible markets.
+   - **Parameters**: `market` (AccountId).
+   - **Returns**: Result<(), VaultError>.
 
-- the name of the `inkathon.code-workspace` file
-- the `package.json`'s name & metadata in the root directory as well as in the `contracts/` and `frontend/` packages
-- the workspace dependency (`@inkathon/contracts`) defined in `frontend/package.json` and imported in `frontend/src/deployments/deployments.ts`
+## Usage
 
-### 2. Custom Contracts
+The Vault contract is designed to be deployed and used on the Acala network for managing collateral assets in decentralized trading. Users can interact with the contract to deposit and withdraw collateral for their leveraged positions. The contract supports multiple collateral assets and markets.
 
-To replace the default `Greeter` contract or add a new one, you need to do the following:
+## End-to-End Tests
 
-- Add a new contract directory under `contracts/src/`
-- Add it as another workspace member to the `contracts/Cargo.toml` file
-- Add another deployment script or adjust `contracts/scripts/deploy.ts`
-- Adjust the `ContractIds` enum and `getDeployments` function in `frontend/src/deployments/deployments.ts`
+The contract includes end-to-end tests covering essential functionalities:
 
-### 3. Custom Scripts
+1. **`add_asset_works`**
+   - Covers adding a new collateral asset to the Vault.
 
-Adding custom scripts is useful to interact with your contracts or test certain functionality. Therefore, just duplicate & reuse the `contracts/scripts/script.template.ts` file and run it via `pnpm run script <script-name>`. This command will run the TypeScript file directly via [`tsx`](https://github.com/privatenumber/tsx).
+2. **`add_market_works`**
+   - Covers adding a new market to the Vault.
 
-For general scripts, the same environment variable initialization & configuration applies as described below in the [Deployment](#deployment) section (e.g. to change the target network).
+3. **`deposit_works`**
+   - Covers the deposit of collateral into the Vault, including checks for markets and assets.
 
-## The Stack 🥞
+4. **`withdraw_works`**
+   - Covers the withdrawal of collateral from the Vault, including checks for markets, assets, and sufficient balances.
 
-<details>
-<summary><strong>The Stack in Detail</strong></summary>
+## Development Environment
 
-- Monorepo Workspace with `contracts/` and `frontend/` directories as packages.
-- Package Manager: `pnpm` or `yarn@stable` (Read more in the [FAQs](#faqs--troubleshooting) section below)
-- Smart Contract Development: Rust, ink!, `cargo-contract`, `substrate-contracts-node`
-- Frontend: Next.js (app-dir), React, TypeScript
-  - Contract Interactions: `polkadot-js`, [`useInkathon`](https://github.com/scio-labs/use-inkathon) React Hooks & Utility Library (alternatively: [`useInk`](https://use.ink/frontend/getting-started))
-  - Styling: `shadcn/ui`, `tailwindcss`
-  - Linting & Formatting: `eslint`, `prettier`, `simple-git-hooks`, `lint-staged`
+- Ensure that the necessary dependencies are installed.
+- Use the provided `Vault` smart contract in your ink! development environment.
+- Follow the provided tests for end-to-end testing and validation.
 
-<small>Styling, linting, and formatting libraries can be fully dropped or replaced with alternatives.</small>
-
-</details>
-
-![inkathon Stack Diagram](inkathon-stack-diagram.png)
-
-## Live Examples 🌐
-
-Below you find live examples that use this boilerplate or have a similar setup inspired by it:
-
-- [inkathon.xyz](https://inkathon.xyz) – Live demo deployment of this boilerplate
-- [AZERO.ID](https://azero.id) – Domain Name Service for Aleph Zero and beyond
-- Multiple hackathon projects from [ETHWarsaw](https://ethwarsaw-2023.devpost.com/submissions/), [HackOnChain](https://www.hackonchain.xyz/), [ETHDam](https://www.ethdam.com/), and the [Polkadot ink! Hackathon](https://www.encode.club/polkadot-ink-hackathon).
-
-## Deployment 🚢
-
-Spinning up a deployment via Vercel is pretty straightforward as the necessary settings are already configured in `vercel.json`. If you haven't cloned the repository yet, you can also use the **Deploy** button below to create a new repository from this template.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fhello-world&env=NEXT_PUBLIC_DEFAULT_CHAIN&envDescription=Insert%20%60alephzero-testnet%60%20or%20%60shibuya%60&envLink=https%3A%2F%2Fgithub.com%2Fscio-labs%2Finkathon%23environment-variables&project-name=inkathon&repository-name=inkathon&redirect-url=https%3A%2F%2Fgithub.com%2Fscio-labs%2Finkathon&demo-url=https%3A%2F%2Finkathon.xyz)
-
-### Environment Variables
-
-One key element making this boilerplate so flexible is the usage of environment variables to configure the active network in the frontend. This is done by setting the `NEXT_PUBLIC_DEFAULT_CHAIN` variable in the `frontend/.env.local` file, or in the Vercel deployment settings respectively.
-
-<details>
-<summary><strong>All Supported Chain Constants</strong></summary>
-
-| Network Identifier  | Name                    | Type    |
-| ------------------- | ----------------------- | ------- |
-| `development`       | ️Local Development Node | Testnet |
-| `alephzero-testnet` | Aleph Zero Testnet      | Testnet |
-| `rococo`            | Rococo                  | Testnet |
-| `shibuya`           | Shibuya Testnet         | Testnet |
-| `shiden`            | Shiden                  | Mainnet |
-| `alephzero`         | Aleph Zero              | Mainnet |
-| `astar`             | Astar                   | Mainnet |
-
-<small>Source: https://github.com/scio-labs/use-inkathon/blob/main/src/chains.ts</small>
-
-> [!NOTE]  
-> Chains can also be supplied manually by creating a [`SubstrateChain`](https://github.com/scio-labs/use-inkathon/blob/main/src/chains.ts#L4) object. If you think a chain is missing, please open an issue or PR.
-
-</details>
-
-All environment variables are imported from `process.env` in [`frontend/src/config/environment.ts`](https://github.com/scio-labs/inkathon/blob/main/frontend/src/config/environment.ts) and re-exported from there. For improved type safety, Always only import environment variables from `@/config/environment` and never directly from `process.env`.
-
-| Environment Variables           | [Default Values](https://github.com/scio-labs/inkathon/blob/main/frontend/.env.local.example) | Description                                                                                                                                                         |
-| ------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_DEFAULT_CHAIN` \*️⃣ | ️`alephzero-testnet`                                                                          | The network (Substrate-based chain) the frontend should connect to by default and what contract deployment artifacts to import.                                     |
-| `NEXT_PUBLIC_PRODUCTION_MODE`   | `false`                                                                                       | Optional boolean flag to differentiate production environment (e.g. for SEO or Analytics).                                                                          |
-| `NEXT_PUBLIC_URL`               | `http://localhost:3000`                                                                       | Optional string that defines the base URL of the frontend (will be auto-inferred from Vercel environment variables).                                                |
-| `NEXT_PUBLIC_SUPPORTED_CHAINS`  | –                                                                                             | Optional array with network identifers (e.g. `["alephzero-testnet", "shibuya"]`) that are supported by the frontend, **if the dApp is supposed to be multi-chain**. |
-
-<small>\*️⃣ Required </small>
-
-### Contract Deployment
-
-In the [Getting Started](#getting-started) section above, we've already deployed the sample `Greeter` contract on a local node. To target a live network, we can use the `CHAIN` environment variable when running the `deploy` script.
-
-```bash
-CHAIN=alephzero-testnet pnpm run deploy
-```
-
-Further, dynamically loaded environment files with the `.env.{chain}` naming convention can be used to add additional configuration about the deployer account.
-
-```bash
-# .env.alephzero-testnet
-ACCOUNT_URI=bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice
-```
-
-When running the same script again, this deployer account defined there will be used to sign the extrinsic.
-
-> [!WARNING]  
-> These files are gitignored by default, but you should still be extra cautious when adding sensitive information to them.
-
-## VSCode Setup 🛠
-
-### Workspace
-
-It can be helpful to develop in VSCode by opening the workspace file `inkathon.code-workspace` instead of just the plain directory. This approach offers multiple advantages, like sections in the file explorer, or shortcut actions to open the terminal in the correct directory.
-
-Consider installin the [`zoma.vscode-auto-open-workspace`](https://marketplace.visualstudio.com/items?itemName=zoma.vscode-auto-open-workspace) extension to automatically open the workspace file when opening the directory.
-
-### Plugins
-
-Additionally, the VSCode plugins listed below are recommended as they can be very helpful when working with this boilerplate.
-
-<details>
-<summary><strong>All Recommended Plugins</strong></summary>
-
-| Plugin Name                                                                                                      | Description                                   |
-| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| [`dbaeumer.vscode-eslint`](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)           | Adds ESLint editor support.                   |
-| [`esbenp.prettier-vscode`](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)           | Adds Prettier editor support.                 |
-| [`bradlc.vscode-tailwindcss`](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)     | Adds tailwindcss editor support.              |
-| [`rust-lang.rust-analyzer`](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)         | Adds Rust language support.                   |
-| [`ink-analyzer.ink-analyzer`](https://marketplace.visualstudio.com/items?itemName=ink-analyzer.ink-analyzer)     | Adds ink! language support.                   |
-| [`tamasfe.even-better-toml`](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)       | Adds `.toml` file support.                    |
-| [`gruntfuggly.todo-tree`](https://marketplace.visualstudio.com/items?itemName=gruntfuggly.todo-tree)             | Lists all `TODO` comments in your workspace.  |
-| [`wayou.vscode-todo-highlight`](https://marketplace.visualstudio.com/items?itemName=wayou.vscode-todo-highlight) | Highlights `TODO` comments in your workspace. |
-| [`mikestead.dotenv`](https://marketplace.visualstudio.com/items?itemName=mikestead.dotenv)                       | Adds syntax highlighting for `.env` files.    |
-
-</details>
-
-## FAQs & Troubleshooting 💬
-
-<details>
-<summary><strong>Which package managers are supported? Do I have to use pnpm?</strong></summary>
-
-For monorepo workspaces, [pnpm](https://pnpm.io) is likely the fastest and most reliable choice. When using it though, it's strongly recommended everyone on the team uses it. No installs should be performed nor any other lock files should be committed.
-
-As an alternative, [yarn](https://yarnpkg.com/) is also supported and can be used for installation. Caveats when using yarn:
-
-- Only the stable version of yarn (currently v3) is supported, not [yarn classic](https://classic.yarnpkg.com/) (v1).
-- `yarn.lock` files should be committed instead of `.pnpm-lock.yaml` files.
-- The `pnpm` CLI is still used in many `package.json` scripts, so these would have to be adjusted manually.
-
-> [!IMPORTANT]  
-> As [npm](https://www.npmjs.com/) lacks support for the `workspace` import protocol, it's not compatible with ink!athon.
-
-</details>
-
-<details>
-<summary><strong>How to solve `Cannot find module './greeter/development.ts'`?</strong></summary>
-
-Sometimes, Next.js doesn't pick up changes (i.e. file creations) in the `contracts/deployments/{contract}/` folders correctly. E.g., when you just deployed on a local node for the first time and set the frontend's `.env.local` to connect to the `development` network.
-
-To fix this, you can delete the build cache at `frontend/.next`. This is currently the only solution and will force Next.js to rebuild the project and pick up the new files.
-
-> [!NOTE]  
-> To prevent this behavior, the `contracts/package.json` file contains a small `postinstall` script that creates an empty `development.ts` file if none exists.
-
-</details>
-
-<details>
-<summary><strong>How to approach styling?</strong></summary>
-
-Currently it offers styling via the following options out of the box:
-
-- [shadcn/ui](https://ui.shadcn.com/) - Re-usable components built using [Radix UI](https://radix-ui.com/) and [Tailwind CSS](https://tailwindcss.com/).
-- Vanilla [Tailwind CSS](https://tailwindcss.com/) styled styles via `className` and `*.module.(s)css` files.
-- Default (S)CSS styles.
-
-> [!INFO]  
-> This boilerplate tries to stay as un-opinonated in regards to styling, which means you can use any styling or component library.
-
-</details>
-
-<details>
-<summary><strong>Resources to learn more about Substrate, ink!, and polkadot.js</strong></summary>
-
-- [ink! Documentation](https://use.ink/)
-- [polkadot.js Documentation](https://polkadot.js.org/docs/)
-- [Polkadot Wiki ink! Tools](https://wiki.polkadot.network/docs/build-open-source)
-- [Aleph Zero Documentation](https://docs.alephzero.org/aleph-zero/build/)
-- [ink!athon Workshop Recording](https://youtube.com/watch?v=SoNLZfsd0mQ)
-- [ink!athon Telegram Group](https://t.me/inkathon)
-
-</details>
+For detailed instructions on setting up the development environment and deploying the contract, refer to the corresponding development and deployment guides.

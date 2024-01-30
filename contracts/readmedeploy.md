@@ -1,0 +1,1 @@
+ CHAIN=alephzero-testnet pnpm run deploy
